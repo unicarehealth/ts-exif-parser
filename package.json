@@ -1,48 +1,90 @@
 {
-  "name": "ts-exif-parser",
-  "version": "0.2.3",
-  "description": "A typescript library to extract Exif metadata from images, in node and in the browser.",
-  "author": "Patik Braun, former: Bruno Windels <bruno.windels@gmail.com>",
-  "keywords": [
-    "exif",
-    "image",
-    "jpeg",
-    "jpg",
-    "tiff",
-    "gps"
-  ],
-  "scripts": {
-    "build": "rollup --config",
-    "test": "tsc lib/*.ts test/*.ts && mocha --recursive test"
-  },
-  "main": "dist/cjs/index.js",
-  "module": "dist/es/index.js",
-  "browser": "dist/umd/ts-exif-parser.js",
-  "types": "dist/es/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/bpatrik/ts-exif-parser.git"
-  },
-  "files": [
-    "dist/**"
-  ],
-  "devDependencies": {
-    "@rollup/plugin-typescript": "^8.3.0",
-    "@types/assert": "1.5.4",
-    "@types/mocha": "8.2.2",
-    "@types/node": "14.14.41",
-    "@types/sax": "1.2.1",
-    "assert": "2.0.0",
-    "mocha": "8.3.2",
-    "rollup": "^2.67.2",
-    "ts-node": "9.1.1",
-    "tslib": "^2.3.1",
-    "tslint": "5.20.1",
-    "tslint-consistent-codestyle": "1.16.0",
-    "typescript": "4.2.4",
-    "uglify-js": "3.13.4"
-  },
-  "dependencies": {
-    "sax": "1.2.4"
-  }
+	"name": "@unicarehealth/ts-exif-parser",
+	"version": "1.0.0",
+	"description": "Reads Exif metadata from JPEG images, in Node.js, Bun, browsers and NetSuite",
+	"keywords": [
+		"exif",
+		"gps",
+		"image",
+		"jpeg",
+		"jpg",
+		"tiff"
+	],
+	"homepage": "https://github.com/unicarehealth/ts-exif-parser#readme",
+	"bugs": {
+		"url": "https://github.com/unicarehealth/ts-exif-parser/issues"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "Bruno Windels",
+		"email": "bruno.windels@gmail.com"
+	},
+	"contributors": [
+		{
+			"name": "Patrik J. Braun",
+			"email": "bra.patrik@gmail.com"
+		},
+		{
+			"name": "Simeon Bartley",
+			"email": "simeon.bartley@unicarehealth.com.au"
+		}
+	],
+	"files": [
+		"CHANGELOG.md",
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/unicarehealth/ts-exif-parser.git"
+	},
+	"type": "module",
+	"//": [
+		"scripts: TypeScript 6 and TypeScript 7 both provide binaries, so we run TypeScript 7's tsc by its path, through Bun, as Windows can't run its shebang line.",
+		"devDependencies: We use TypeScript 7 for tsc, but TypeScript 7 doesn't have an API yet, so we need 'typescript' to resolve to TypeScript 6 for typescript-eslint."
+	],
+	"scripts": {
+		"build": "bun run build:clean && bun run build:js && bun run build:types",
+		"build:clean": "rm -rf dist",
+		"build:js": "bun build src/index.ts --outdir dist --target browser --format esm --sourcemap=linked",
+		"build:types": "bun node_modules/@typescript/native/bin/tsc --project tsconfig.build.json",
+		"fix-lint": "eslint --max-warnings 0 --fix",
+		"lint": "bun run lint:tsc && bun run lint:eslint && bun run lint:npm-package-json-lint",
+		"lint:eslint": "eslint --max-warnings 0",
+		"lint:npm-package-json-lint": "npmPkgJsonLint .",
+		"lint:tsc": "bun node_modules/@typescript/native/bin/tsc",
+		"release-major": "bun run lint && bun run test && npm version major && bun run release:publish",
+		"release-minor": "bun run lint && bun run test && npm version minor && bun run release:publish",
+		"release-patch": "bun run lint && bun run test && npm version patch && bun run release:publish",
+		"release:publish": "bun run build && bun publish && git push --follow-tags",
+		"test": "bun test",
+		"update": "npm-check-updates --format group --interactive"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.4",
+		"@typescript/native": "npm:typescript@^7.0.2",
+		"@unicarehealth/eslint-config": "~10.0.0",
+		"@unicarehealth/npm-package-json-lint-config": "~1.0.0",
+		"eslint": "^10.13.0",
+		"npm-check-updates": "^23.1.1",
+		"npm-package-json-lint": "^11.0.0",
+		"typedoc": "^0.28.20",
+		"typescript": "npm:@typescript/typescript6@^6.0.2"
+	},
+	"engines": {
+		"node": "^24.0.0 || ^26.0.0"
+	},
+	"packageManager": "bun@1.4.4",
+	"private": false,
+	"publishConfig": {
+		"registry": "https://npm.unicarehealth.com.au/"
+	},
+	"sideEffects": false
 }

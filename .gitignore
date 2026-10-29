@@ -1,12 +1,8 @@
-node_modules
-dist
-.idea/
-lib/**/*.js
-lib/**/*.js.map
-lib/**/*.d.ts
-test/**/*.js
-test/**/*.js.map
-test/**/*.d.ts
-index.js
-index.js.map
-index.d.ts
+# Files that Git should ignore (https://git-scm.com/docs/gitignore).
+
+/*.tgz
+/.eslintcache
+/coverage/
+/dist/
+/doc/
+/node_modules/

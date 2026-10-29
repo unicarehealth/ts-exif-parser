@@ -1,97 +1,96 @@
-ts-exif-parser
-========
-[![npm version](https://badge.fury.io/js/ts-exif-parser.svg)](https://badge.fury.io/js/ts-exif-parser)
-[![Build Status](https://travis-ci.org/bpatrik/ts-exif-parser.svg?branch=master)](https://travis-ci.org/bpatrik/ts-exif-parser)
+# ts-exif-parser
 
-This module is based on the exif-parser: https://github.com/bwindels/exif-parser
- 
+Reads [Exif](https://en.wikipedia.org/wiki/Exif) metadata from JPEG images, in
+[Node.js](https://nodejs.org/), [Bun](https://bun.sh/), browsers and
+[NetSuite](https://www.netsuite.com/) SuiteScript. It has no dependencies.
 
-----------------
-exif-parser is a parser for image metadata in the exif format, the most popular metadata format for jpeg and tiff images. It is written in pure javascript and has no external dependencies. It can also get the size of jpeg images and the size of the jpeg thumbnail embedded in the exif data. It can also extract the embedded thumbnail image.
+This is [Unicare Health](https://unicare.au/)'s fork of
+[`ts-exif-parser`](https://github.com/bpatrik/ts-exif-parser) by Patrik J.
+Braun, which is based on
+[`exif-parser`](https://github.com/bwindels/exif-parser) by Bruno Windels. The
+original package hasn't been updated since 2022. The fork is published as
+`@unicarehealth/ts-exif-parser` on
+[our Verdaccio instance](https://npm.unicarehealth.com.au/). See the
+[changelog](CHANGELOG.md) for how it differs from the original.
 
-### Installing
+## Installation
 
-    npm install ts-exif-parser
+Configure your package manager to use our Verdaccio instance for the
+`@unicarehealth` scope, and then install the package:
 
-You can also build a browser bundle to include it with a `<script>` tag in a HTML document, like this:
-
-	git clone git@github.com:bpatrik/ts-exif-parser.git
-	cd exif-parser/
-	make build-browser-bundle
- 
-### Creating a parser
-To start parsing exif data, create a new parser like below. Note that the buffer you pass does not have to be the buffer for the full jpeg file. The exif section of a jpeg file has a maximum size of 65535 bytes and the section seems to always occur within the first 100 bytes of the file. So it is safe to only fetch the first 65635 bytes of a jpeg file and pass those to the parser.
-
-The buffer you pass to create can be a node buffer or a DOM ArrayBuffer.
-
-```typescript
-import {ExifParserFactory} from "ts-exif-parser";
-const parser = ExifParserFactory.create(data);
-const Data = ExifParserFactory.create(data).parse();
+```sh
+bun add @unicarehealth/ts-exif-parser
 ```
 
-### Setting the flags
+## Usage
 
-Before calling parse, you can set a number of flags on the parser, telling it how to behave while parsing.
+```ts
+import { ExifParserFactory, OrientationTypes } from '@unicarehealth/ts-exif-parser';
 
-Add fields in the binary format to result. Since these fields are mostly used for internal fields like Padding, you generally are not interested in these. If enabled, values for these fields will be a Buffer object in node or an ArrayBuffer in DOM environments (browsers).
-
-    parser.enableBinaryFields([boolean]), default false;
-
-EXIF tags are organized into different sections, and to tell you the offset to other sections, EXIF uses certain tags. These tags don't tell you anything about the image, but are more for parsers to find out about all tags. Hence, these "pointer" fields are not included in the result tags field by default. Change this flag to include them nonetheless.
-
-    parser.enablePointers([boolean]), default false;
-
-Resolve tags to their textual name, making result.tags a dictonary object instead of an array with the tag objects with no textual tag name.
-
-    parser.enableTagNames([boolean]), default true;
-
-Read the image size while parsing.
-
-    parser.enableImageSize([boolean]), default true;
-
-Read the EXIF tags. Could be useful to disable if you only want to read the image size.
-
-    parser.enableReturnTags([boolean]), default true;
-
-EXIF values can be represented in a number of formats (fractions, degrees, arrays, ...) with different precision.
-Enabling this tries to cast values as much as possible to the appropriate javascript types like number, Date.
-
-    parser.enableSimpleValues([boolean]), default true;
-
-### working with the result
-
-#### Getting the tags
-the tags that were found while parsing are stored in ```result.tags``` unless you set ```parser.enableReturnTags(false)```. If ```parser.enableTagNames``` is set to true, ```result.tags``` will be an object with the key being the tag name and the value being the tag value. If ```parser.enableTagNames``` is set to false, ```result.tags``` will be an array of objects containing section, type and value properties.
-
-#### Getting the image size
-If ```parser.enableImageSize``` is set to true, ```result.getImageSize()``` will give you the image size as an object with width and height properties.
-
-#### Getting the thumbnail
-
-You can check if there is a thumbnail present in the exif data with ```result.hasThumbnail()```. Exif supports thumbnails is jpeg and tiff format, though most are in jpeg format. You can check if there is a thumbnail present in a give format by passing the mime type: ```result.hasThumbnail("image/jpeg")```.
-
-You can also get the image size of the thumbnail as an object with width and height properties: ```result.getThumbnailSize()```.
-
-To get the node buffer or arraybuffer containing just the thumbnail, call ```result.getThumbnailBuffer()```
-
-# Running the unit tests
-
-```typescript
-npm test
+const data = ExifParserFactory.create(bytes).parse();
+const isRotated = (data.tags.Orientation ?? OrientationTypes.TOP_LEFT) >= OrientationTypes.LEFT_TOP;
 ```
 
-# Using the browser bundle
+`bytes` can be an `ArrayBuffer`, any typed array (including a Node.js
+`Buffer`), or a `DataView`. It doesn't have to be the whole image: the Exif
+data is in a section of at most 64 KiB near the start of the file, so the first
+64 KiB or so are usually enough.
 
-When installed, you'll find the browser bundle in `node_modules/ts-exif-parser/dist/umd/ts-exif-parser.js`. It's a non minified file. So you must minify it yourself to fit your needs.
+`parse()` throws a `RangeError` if the Exif data is truncated or malformed, and
+an `Error` if a tag has an unknown format. Sections that aren't Exif data (or
+have invalid headers) are ignored.
 
-This bundle provides a `TsExifParser` global variable.
+### Options
 
-```javascript
-var parser = TsExifParser.ExifParserFactory.create(data);
-var Data = TsExifParser.ExifParserFactory.create(data).parse();
-```
+Set these before calling `parse()`. Each returns the parser, so they can be
+chained.
 
-# Contributions
+| Method | Default | What it does |
+| --- | --- | --- |
+| `enableBinaryFields(enable)` | `false` | Reads tags in the undefined format (mostly internal data, such as `Padding`) as `ArrayBuffer`s. |
+| `enablePointers(enable)` | `false` | Returns the tags that point to the embedded thumbnail. The tags that point to other directories are never returned. |
+| `enableTagNames(enable)` | `true` | Returns the tags as an object keyed by tag name. When disabled, `tags` is an array of `{ section, type, value }` (`ExifTagEntry`) instead. |
+| `enableImageSize(enable)` | `true` | Reads the image's size from its start of frame section. |
+| `enableReturnTags(enable)` | `true` | Returns the tags at all. The thumbnail is still found when this is disabled. |
+| `enableSimpleValues(enable)` | `true` | Converts rationals to numbers, lists of one value to that value, GPS coordinates to signed degrees, and dates to timestamps in seconds since the Unix epoch. |
 
-I welcome external contributions through pull requests.
+### Results
+
+- `data.tags` holds the tags (see `enableTagNames`). The `ExifTags` type lists
+  the known tags, but its value types are only approximate.
+- `data.getImageSize()` returns `{ width, height }` from the start of frame
+  section, if there is one.
+- `data.hasThumbnail()` checks for an embedded thumbnail, and
+  `data.hasThumbnail('image/jpeg')` (or `'image/tiff'`) checks for one in that
+  format.
+- `data.getThumbnailBuffer()` returns a copy of the thumbnail's bytes,
+  `data.getThumbnailSize()` its size (for a JPEG thumbnail), and
+  `data.getThumbnailOffset()` and `data.getThumbnailLength()` where it is in the
+  image. These throw if there's no thumbnail.
+
+## Development
+
+This project uses [Bun](https://bun.sh/) (the version in `packageManager` in
+`package.json`).
+
+- `bun install` installs the dependencies, from our Verdaccio instance.
+- `bun run lint` checks the types (with
+  [TypeScript](https://www.typescriptlang.org/) 7) and runs
+  [ESLint](https://eslint.org/) (with `@unicarehealth/eslint-config`) and
+  [npm-package-json-lint](https://npmpackagejsonlint.org/). There must be no
+  warnings.
+- `bun run test` runs the tests, which must cover every line. The snapshots in
+  `test/__snapshots__` record what the parser reads from each sample image in
+  `test/fixtures`. Update them with `bun test --update-snapshots`, and check that
+  the changes are the ones you intended.
+- `bun run build` builds the package into `dist`: an ES module bundle for
+  ES2024 and later, and type declarations.
+
+To release a version, run `bun run release-patch`, `bun run release-minor` or
+`bun run release-major`. Each lints and tests the package, sets the version
+(committing and tagging it), builds and publishes it, and pushes the commit and
+tag. Add the version's changes to the [changelog](CHANGELOG.md) first.
+
+## Licence
+
+[MIT](LICENSE.md), as the original package is.

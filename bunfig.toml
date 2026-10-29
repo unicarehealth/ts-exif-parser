@@ -1,0 +1,24 @@
+# The Bun (https://bun.sh/) configuration.
+
+telemetry = false
+
+[install]
+minimumReleaseAge = 172800
+# The minimum release age protects against compromised releases of other
+# people's packages, so our own (in the @unicarehealth scope) are exempt. This
+# lists each of them by name, as Bun doesn't document patterns here.
+minimumReleaseAgeExcludes = ["@unicarehealth/eslint-config", "@unicarehealth/npm-package-json-lint-config"]
+registry = "https://npm.unicarehealth.com.au/"
+saveTextLockfile = true
+
+[install.scopes]
+"@unicarehealth" = "https://npm.unicarehealth.com.au/"
+
+[run]
+bun = true
+
+[test]
+coverage = true
+coverageReporter = ["text", "lcov"]
+# Fail if any line or function that the tests load isn't covered.
+coverageThreshold = 1.0

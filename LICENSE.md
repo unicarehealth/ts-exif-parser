@@ -2,6 +2,8 @@ The MIT License
 ===============
 
 Copyright (c) 2010 Bruno Windels <bruno.windels@gmail.com>, Daniel Leinich <leinich@gmx.net>.
+Copyright (c) 2017-2022 Patrik J. Braun and contributors.
+Copyright (c) 2026 Unicare Health.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
